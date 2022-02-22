@@ -1,0 +1,53 @@
+#!/bin/bash
+
+source /usr/local/lib/entrypoint.sh
+
+set -e
+
+log "Checking for updates ..."
+download_url=$(
+	curl \
+		--header "Accept-Encoding: identity" \
+		--header "Accept-Language: en" \
+		--location \
+		--silent \
+		--user-agent "crashvb/minecraft-bedrock" \
+		"${MINECRAFT_DOWNLOAD_URL:=https://www.minecraft.net/en-us/download/server/bedrock}" | \
+	egrep --only-matching 'https://[^"]*linux/bedrock-server-[0-9.]*.zip'
+)
+version_deployed=$(cat "${MINECRAFT_HOME}/version" 2>/dev/null || true)
+version_embedded=$(cat "${MINECRAFT_SHARE}/embedded/version" 2>/dev/null || true)
+version_latest=$(
+	log "${download_url}" | \
+	egrep --only-matching "([0-9]{1,}\.)+[0-9]{1,}"
+)
+
+log "Version Latest   : ${version_latest}"
+log "Version Deployed : ${version_deployed}"
+log "Version Embedded : ${version_embedded}"
+
+if [[ "X${version_latest}" != "X${version_embedded}" ]] ; then
+	log "Embedding server version ${version_latest} ..."
+
+	# Download to a temporary location ...
+	path=$(mktemp --directory --suffix=".minecraft")
+	tmp=$(mktemp --suffix=".zip")
+	wget --quiet --output-document="${tmp}" "${download_url}"
+	unzip -oq "${tmp}" -d "${path}"
+	rm --force "${tmp}"
+
+	# Customize ...
+	rm --force "${path}/bedrock_server_symbols.debug"
+	for i in $(cat "${MINECRAFT_SHARE}/$(basename $0).configs"); do
+		mv "${path}/${i}" "${path}/${i}.dist"
+		ln --force --symbolic "${MINECRAFT_CONFIG}/${i}" "${path}/${i}"
+	done
+	echo "${version_latest}" > "${path}/version"
+
+	# Atomic upgrade ...
+	rm --force --recursive "${MINECRAFT_SHARE}/embedded"
+	mv "${path}" "${MINECRAFT_SHARE}/embedded"
+else
+	log "No updates available ..."
+fi
+
