@@ -1,5 +1,10 @@
 # minecraft-bedrock-docker
 
+[![version)](https://img.shields.io/docker/v/crashvb/minecraft-bedrock/latest)](https://hub.docker.com/repository/docker/crashvb/minecraft-bedrock)
+[![image size](https://img.shields.io/docker/image-size/crashvb/minecraft-bedrock/latest)](https://hub.docker.com/repository/docker/crashvb/minecraft-bedrock)
+[![linting](https://img.shields.io/badge/linting-hadolint-yellow)](https://github.com/hadolint/hadolint)
+[![license](https://img.shields.io/github/license/crashvb/minecraft-bedrock-docker.svg)](https://github.com/crashvb/minecraft-bedrock-docker/blob/master/LICENSE.md)
+
 ## Overview
 
 This docker image contains [Minecraft Bedrock](https://www.minecraft.net/en-us/download/server/bedrock).
@@ -14,13 +19,13 @@ The embedded entrypoint script is located at `/etc/entrypoint.d/minecraft` and p
 
  | Variable | Default Value | Description |
  | -------- | ------------- | ----------- |
- | MINECRAFT_ALLOWLIST | | Users to be added to `allowlist.json`. |
- | MINECRAFT_DOWNLOAD_URL | https://www.minecraft.net/en-us/download/server/bedrock | URL used to retrieve updates. |
- | MINECRAFT_MEMBERS | | Members to be added to `permissions.json`. |
- | MINECRAFT_OPERATORS | | Operators to be added to `permissions.json`. |
- | MINECRAFT_REBOOT_SCHEDULE | 0 4 &ast; &ast; &ast; | Schedule section of the minecraft crontab entry. |
- | MINECRAFT_NO_UPDATE | | If defined, no automatic updating will be performed and the embedded version will be used. |
- | MINECRAFT_VISITORS | | Operators to be added to `permissions.json`. |
+ | MINECRAFT\_ALLOWLIST | | Users to be added to `allowlist.json`. |
+ | MINECRAFT\_DOWNLOAD\_URL | https://www.minecraft.net/en-us/download/server/bedrock | URL used to retrieve updates. |
+ | MINECRAFT\_MEMBERS | | Members to be added to `permissions.json`. |
+ | MINECRAFT\_OPERATORS | | Operators to be added to `permissions.json`. |
+ | MINECRAFT\_REBOOT\_SCHEDULE | 0 4 &ast; &ast; &ast; | Schedule section of the minecraft crontab entry. |
+ | MINECRAFT\_NO\_UPDATE | | If defined, no automatic updating will be performed and the embedded version will be used. |
+ | MINECRAFT\_VISITORS | | Operators to be added to `permissions.json`. |
 
 In addition to the environment variables listed above, all enviroment variables prefixed with `MINECRAFT_` are scanned and populated into `server.properties` (e.g. `MINECRAFT_SERVER_NAME` will be used to assign `server-name`).
 
@@ -67,7 +72,7 @@ The embedded healthcheck script is located at `/etc/healthcheck.d/minecraft` and
 ### Volumes
 
 * `/etc/minecraft` - minecraft configuration directory.
-* `/var/lib/minecraft` - minecraft deployment directory..
+* `/var/lib/minecraft` - minecraft deployment directory.
 
 ## Development
 

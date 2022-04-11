@@ -24,8 +24,8 @@ ENV \
 	MINECRAFT_HOME=/var/lib/minecraft \
 	MINECRAFT_REBOOT_SCHEDULE="0 4 * * *" \
 	MINECRAFT_SHARE=/usr/local/share/minecraft
-ADD cron.* minecraft-download.configs ${MINECRAFT_SHARE}/
-ADD minecraft-download /usr/local/bin/
+COPY cron.* minecraft-download.configs ${MINECRAFT_SHARE}/
+COPY minecraft-download /usr/local/bin/
 RUN groupadd minecraft && \
 	useradd --create-home --gid=minecraft --home-dir="${MINECRAFT_HOME}" --shell=/usr/bin/nologin minecraft && \
 	install --directory --group=minecraft --owner=minecraft "${MINECRAFT_CONFIG}" "${MINECRAFT_SHARE}/embedded" && \
@@ -33,15 +33,15 @@ RUN groupadd minecraft && \
 	rm --force /etc/cron.*/*
 
 # Configure: supervisor
-ADD supervisord.cron.conf /etc/supervisor/conf.d/cron.conf
-ADD supervisord.minecraft.conf /etc/supervisor/conf.d/minecraft.conf
+COPY supervisord.cron.conf /etc/supervisor/conf.d/cron.conf
+COPY supervisord.minecraft.conf /etc/supervisor/conf.d/minecraft.conf
 
 # Configure: entrypoint
-ADD entrypoint.minecraft /etc/entrypoint.d/minecraft
+COPY entrypoint.minecraft /etc/entrypoint.d/minecraft
 
 # Configure: healthcheck
-ADD healthcheck.cron /etc/healthcheck.d/cron
-ADD healthcheck.minecraft /etc/healthcheck.d/minecraft
+COPY healthcheck.cron /etc/healthcheck.d/cron
+COPY healthcheck.minecraft /etc/healthcheck.d/minecraft
 
 EXPOSE 19132/udp 19133/udp
 
