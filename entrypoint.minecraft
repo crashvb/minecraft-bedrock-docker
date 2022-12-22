@@ -29,7 +29,7 @@ if [[ ! -e $EP_RUN ]] ; then
 		log "Skipping cron template ..."
 	fi
 
-	# Config initialization ...
+	# Volume initialization
 	if [[ ! -e "${MINECRAFT_CONFIG}/allowlist.json" ]] ; then
 		if [[ -n ${MINECRAFT_ALLOWLIST} ]] ; then
 			log "Generating: allowlist.json"
@@ -87,24 +87,15 @@ if [[ ! -e $EP_RUN ]] ; then
 		install --directory --group=minecraft --mode=0755 --owner=minecraft "${MINECRAFT_CONFIG}/worlds"
 	fi
 
-	# Volume initialization
-	if [[ ! -f "${MINECRAFT_HOME}/version" ]] ; then
-		log "Initializing data volume ..."
-		cp --no-clobber --no-dereference --recursive "${MINECRAFT_SHARE}/embedded/"* "${MINECRAFT_HOME}/"
+	log "Defaulting failsafe configurations ..."
+	for i in $(cat "${MINECRAFT_SHARE}/minecraft-download.configs"); do
+		if [[ ! -e "${MINECRAFT_CONFIG}/${i}" ]] ; then
+			log "	${i}"
+			cp --no-clobber "${MINECRAFT_HOME}/${i}.dist" "${MINECRAFT_CONFIG}/${i}"
+		fi
+	done
 
-		log "Defaulting failsafe configurations ..."
-		for i in $(cat "${MINECRAFT_SHARE}/minecraft-download.configs"); do
-			if [[ ! -e "${MINECRAFT_CONFIG}/${i}" ]] ; then
-				log "	${i}"
-				cp --no-clobber "${MINECRAFT_HOME}/${i}.dist" "${MINECRAFT_CONFIG}/${i}"
-			fi
-		done
-
-		log "Applying ownership and permissions ..."
-		find "${MINECRAFT_CONFIG}" "${MINECRAFT_HOME}" \( \! -user minecraft -o \! -group minecraft \) -exec chown minecraft:minecraft {} \;
-	else
-		log "Skipping data volume initialization ..."
-	fi
-	log "Deployed version: $(cat "${MINECRAFT_HOME}/version")"
+	log "Applying ownership and permissions ..."
+	find "${MINECRAFT_CONFIG}" "${MINECRAFT_HOME}" \( \! -user minecraft -o \! -group minecraft \) -exec chown minecraft:minecraft {} \;
 fi
 
