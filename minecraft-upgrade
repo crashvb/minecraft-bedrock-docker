@@ -1,0 +1,21 @@
+#!/bin/bash
+
+source /usr/local/lib/entrypoint.sh
+
+set -e
+
+log "Checking for upgrades ..."
+version_deployed=$(cat "${MINECRAFT_HOME}/version" 2>/dev/null || true)
+version_embedded=$(cat "${MINECRAFT_SHARE}/embedded/version" 2>/dev/null || true)
+
+log "Version Deployed : ${version_deployed}"
+log "Version Embedded : ${version_embedded}"
+
+if [[ "X${version_deployed}" != "X${version_embedded}" ]] ; then
+	log "Deploying server version ${version_embedded} ..."
+	cp --no-clobber --no-dereference --recursive "${MINECRAFT_SHARE}/embedded/"* "${MINECRAFT_HOME}/"
+	log "Done."
+else
+	log "No upgrades available ..."
+fi
+

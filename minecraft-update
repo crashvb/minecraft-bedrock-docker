@@ -42,11 +42,13 @@ if [[ "X${version_latest}" != "X${version_embedded}" ]] ; then
 		mv "${path}/${i}" "${path}/${i}.dist"
 		ln --force --symbolic "${MINECRAFT_CONFIG}/${i}" "${path}/${i}"
 	done
+	ln --force --symbolic "${MINECRAFT_CONFIG}/worlds" "${path}/worlds"
 	echo "${version_latest}" > "${path}/version"
 
 	# Atomic upgrade ...
 	rm --force --recursive "${MINECRAFT_SHARE}/embedded"
 	mv "${path}" "${MINECRAFT_SHARE}/embedded"
+	log "Done."
 else
 	log "No updates available ..."
 fi

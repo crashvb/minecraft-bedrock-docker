@@ -2,6 +2,20 @@
 
 set -e
 
+# Update embedded version, if needed ...
+if [[ -z ${MINECRAFT_NO_UPDATE} ]] ; then
+	minecraft-update
+else
+	log "Skipping minecraft update ..."
+fi
+
+# Update deployed version, if needed ...
+if [[ -z ${MINECRAFT_NO_UPGRADE} ]] ; then
+	minecraft-upgrade
+else
+	log "Skipping minecraft upgrade ..."
+fi
+
 # Configure: minecraft
 if [[ ! -e $EP_RUN ]] ; then
 	log "Configuring $(basename $0) for first run ..."
@@ -15,70 +29,68 @@ if [[ ! -e $EP_RUN ]] ; then
 		log "Skipping cron template ..."
 	fi
 
-	# Update embedded version, if needed ...
-	if [[ -z ${MINECRAFT_NO_UPDATE} ]] ; then
-		minecraft-download
-	else
-		log "Skipping update check ..."
+	# Config initialization ...
+	if [[ ! -e "${MINECRAFT_CONFIG}/allowlist.json" ]] ; then
+		if [[ -n ${MINECRAFT_ALLOWLIST} ]] ; then
+			log "Generating: allowlist.json"
+			log "	${MINECRAFT_ALLOWLIST}"
+			jq \
+				--arg allowlist "${MINECRAFT_ALLOWLIST}" \
+				--null-input \
+				'$allowlist | split(",") | map({"name": .})' \
+				> "${MINECRAFT_CONFIG}/allowlist.json"
+		fi
+	fi
+
+	if [[ ! -e "${MINECRAFT_CONFIG}/permission.json" ]] ; then
+		if [[ -n ${MINECRAFT_MEMBERS} || -n ${MINECRAFT_OPERATORS} || -n ${MINECRAFT_VISITORS} ]] ; then
+			log "Generating: permissions.json"
+			log "	Members   : ${MINECRAFT_MEMBERS}"
+			log "	Operators : ${MINECRAFT_OPERATORS}"
+			log "	Visitors  : ${MINECRAFT_VISITORS}"
+			jq \
+				--arg members "$MINECRAFT_MEMBERS" \
+				--arg operators "$MINECRAFT_OPERATORS" \
+				--arg visitors "$MINECRAFT_VISITORS" \
+				--null-input \
+				'[[$members | split(",") | map({permission: "member", xuid:.})],
+				[$operators | split(",") | map({permission: "operator", xuid:.})],
+				[$visitors  | split(",") | map({permission: "visitor", xuid:.})]
+				]| flatten' \
+				> "${MINECRAFT_CONFIG}/permissions.json"
+		fi
+	fi
+
+	if [[ ! -e "${MINECRAFT_CONFIG}/server.properties" ]] ; then
+		if [[ -n ${MINECRAFT_SERVER_NAME} ]] ; then
+			log "Generating: server.properties"
+			cp --no-clobber "${MINECRAFT_HOME}/server.properties.dist" "${MINECRAFT_CONFIG}/server.properties"
+			ignore=("allowlist" "config" "download-url" "home" "members" "no-update" "operator" "reboot-schedule" "share" "visitors")
+			ignore=" ${ignore[*]} "
+			SAVEIFS=$IFS
+			IFS=$(echo -en "\n\b")
+			for line in $(env); do
+				[[ ! "${line}" =~ ^MINECRAFT_ ]] && continue
+				name=$(echo "${line}" | sed --regexp-extended --expression="s/MINECRAFT_(.*)=.*/\\1/g")
+				name=${name,,}
+				name=${name//_/-}
+				[[ "${ignore}" =~ " ${name} " ]] && continue
+				value=$(echo "${line}" | sed --regexp-extended --expression="s/MINECRAFT_.*=(.*)/\\1/g")
+				echo "	$name=$value"
+				sed --expression="/^${name}/c${name}=${value}" --in-place "${MINECRAFT_CONFIG}/server.properties"
+			done
+			IFS=$SAVEIFS
+		fi
+	fi
+
+	if [[ ! -d "${MINECRAFT_CONFIG}/worlds" ]] ; then
+		install --directory --group=minecraft --mode=0755 --owner=minecraft "${MINECRAFT_CONFIG}/worlds"
 	fi
 
 	# Volume initialization
 	if [[ ! -f "${MINECRAFT_HOME}/version" ]] ; then
 		log "Initializing data volume ..."
 		cp --no-clobber --no-dereference --recursive "${MINECRAFT_SHARE}/embedded/"* "${MINECRAFT_HOME}/"
-
-		if [[ ! -e "${MINECRAFT_CONFIG}/allowlist.json" ]] ; then
-			if [[ -n ${MINECRAFT_ALLOWLIST} ]] ; then
-				log "Generating: allowlist.json"
-				log "	${MINECRAFT_ALLOWLIST}"
-				jq \
-					--arg allowlist "${MINECRAFT_ALLOWLIST}" \
-					--null-input \
-					'$allowlist | split(",") | map({"name": .})' \
-					> "${MINECRAFT_CONFIG}/allowlist.json"
-			fi
-		fi
-
-		if [[ ! -e "${MINECRAFT_CONFIG}/permission.json" ]] ; then
-			if [[ -n ${MINECRAFT_MEMBERS} || -n ${MINECRAFT_OPERATORS} || -n ${MINECRAFT_VISITORS} ]] ; then
-				log "Generating: permissions.json"
-				log "	Members   : ${MINECRAFT_MEMBERS}"
-				log "	Operators : ${MINECRAFT_OPERATORS}"
-				log "	Visitors  : ${MINECRAFT_VISITORS}"
-				jq \
-					--arg members "$MINECRAFT_MEMBERS" \
-					--arg operators "$MINECRAFT_OPERATORS" \
-					--arg visitors "$MINECRAFT_VISITORS" \
-					--null-input \
-					'[[$members | split(",") | map({permission: "member", xuid:.})],
-					[$operators | split(",") | map({permission: "operator", xuid:.})],
-					[$visitors  | split(",") | map({permission: "visitor", xuid:.})]
-					]| flatten' \
-					> "${MINECRAFT_CONFIG}/permissions.json"
-			fi
-		fi
-
-		if [[ ! -e "${MINECRAFT_CONFIG}/server.properties" ]] ; then
-			if [[ -n ${MINECRAFT_SERVER_NAME} ]] ; then
-				log "Generating: server.properties"
-				cp --no-clobber "${MINECRAFT_HOME}/server.properties.dist" "${MINECRAFT_CONFIG}/server.properties"
-				ignore=("allowlist" "config" "download-url" "home" "members" "no-update" "operator" "reboot-schedule" "share" "visitors")
-				ignore=" ${ignore[*]} "
-				SAVEIFS=$IFS
-				IFS=$(echo -en "\n\b")
-				for line in $(env); do
-					[[ ! "${line}" =~ ^MINECRAFT_ ]] && continue
-					name=$(echo "${line}" | sed --regexp-extended --expression="s/MINECRAFT_(.*)=.*/\\1/g")
-					name=${name,,}
-					name=${name//_/-}
-					[[ "${ignore}" =~ " ${name} " ]] && continue
-					value=$(echo "${line}" | sed --regexp-extended --expression="s/MINECRAFT_.*=(.*)/\\1/g")
-					echo "	$name=$value"
-					sed --expression="/^${name}/c${name}=${value}" --in-place "${MINECRAFT_CONFIG}/server.properties"
-				done
-				IFS=$SAVEIFS
-			fi
-		fi
 
 		log "Defaulting failsafe configurations ..."
 		for i in $(cat "${MINECRAFT_SHARE}/minecraft-download.configs"); do

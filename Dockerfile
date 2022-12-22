@@ -24,12 +24,12 @@ ENV \
 	MINECRAFT_HOME=/var/lib/minecraft \
 	MINECRAFT_REBOOT_SCHEDULE="0 4 * * *" \
 	MINECRAFT_SHARE=/usr/local/share/minecraft
-COPY cron.* minecraft-download.configs ${MINECRAFT_SHARE}/
-COPY minecraft-download /usr/local/bin/
+COPY cron.* minecraft-update.configs ${MINECRAFT_SHARE}/
+COPY minecraft-update minecraft-upgrade /usr/local/bin/
 RUN groupadd minecraft && \
 	useradd --create-home --gid=minecraft --home-dir="${MINECRAFT_HOME}" --shell=/usr/bin/nologin minecraft && \
 	install --directory --group=minecraft --owner=minecraft "${MINECRAFT_CONFIG}" "${MINECRAFT_SHARE}/embedded" && \
-	minecraft-download && \
+	minecraft-update && \
 	rm --force /etc/cron.*/*
 
 # Configure: supervisor

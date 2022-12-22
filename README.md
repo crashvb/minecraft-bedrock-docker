@@ -24,7 +24,8 @@ The embedded entrypoint script is located at `/etc/entrypoint.d/minecraft` and p
  | MINECRAFT\_MEMBERS | | Members to be added to `permissions.json`. |
  | MINECRAFT\_OPERATORS | | Operators to be added to `permissions.json`. |
  | MINECRAFT\_REBOOT\_SCHEDULE | 0 4 &ast; &ast; &ast; | Schedule section of the minecraft crontab entry. |
- | MINECRAFT\_NO\_UPDATE | | If defined, no automatic updating will be performed and the embedded version will be used. |
+ | MINECRAFT\_NO\_UPDATE | | If defined, no automatic updating of the embedded version will be performed. |
+ | MINECRAFT\_NO\_UPGRADE | | If defined, no automatic upgrading of the deployed version will be performed. |
  | MINECRAFT\_VISITORS | | Operators to be added to `permissions.json`. |
 
 In addition to the environment variables listed above, all enviroment variables prefixed with `MINECRAFT_` are scanned and populated into `server.properties` (e.g. `MINECRAFT_SERVER_NAME` will be used to assign `server-name`).
@@ -58,7 +59,8 @@ The embedded healthcheck script is located at `/etc/healthcheck.d/minecraft` and
 ├─ usr/
 │  └─ local/
 │     └─ bin/
-│        └─ minecraft-download
+│        ├─ minecraft-update
+│        └─ minecraft-upgrade
 └─ var/
    └─ lib/
       └─ minecraft/
