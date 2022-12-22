@@ -88,7 +88,7 @@ if [[ ! -e $EP_RUN ]] ; then
 	fi
 
 	log "Defaulting failsafe configurations ..."
-	for i in $(cat "${MINECRAFT_SHARE}/minecraft-download.configs"); do
+	for i in $(cat "${MINECRAFT_SHARE}/minecraft-update.configs"); do
 		if [[ ! -e "${MINECRAFT_CONFIG}/${i}" ]] ; then
 			log "	${i}"
 			cp --no-clobber "${MINECRAFT_HOME}/${i}.dist" "${MINECRAFT_CONFIG}/${i}"
