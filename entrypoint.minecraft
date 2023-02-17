@@ -1,24 +1,24 @@
 #!/bin/bash
 
-set -e
+set -e -o pipefail
 
 # Update embedded version, if needed ...
-if [[ -z ${MINECRAFT_NO_UPDATE} ]] ; then
+if [[ -z "${MINECRAFT_NO_UPDATE}" ]] ; then
 	minecraft-update
 else
 	log "Skipping minecraft update ..."
 fi
 
 # Update deployed version, if needed ...
-if [[ -z ${MINECRAFT_NO_UPGRADE} ]] ; then
+if [[ -z "${MINECRAFT_NO_UPGRADE}" ]] ; then
 	minecraft-upgrade
 else
 	log "Skipping minecraft upgrade ..."
 fi
 
 # Configure: minecraft
-if [[ ! -e $EP_RUN ]] ; then
-	log "Configuring $(basename $0) for first run ..."
+if [[ ! -e "${EP_RUN}" ]] ; then
+	log "Configuring $(basename "${0}") for first run ..."
 
 	install --group=root --mode=0644 --owner=minecraft /dev/null /var/log/cron.log
 
@@ -31,7 +31,7 @@ if [[ ! -e $EP_RUN ]] ; then
 
 	# Volume initialization
 	if [[ ! -e "${MINECRAFT_CONFIG}/allowlist.json" ]] ; then
-		if [[ -n ${MINECRAFT_ALLOWLIST} ]] ; then
+		if [[ -n "${MINECRAFT_ALLOWLIST}" ]] ; then
 			log "Generating: allowlist.json"
 			log "	${MINECRAFT_ALLOWLIST}"
 			jq \
@@ -43,15 +43,15 @@ if [[ ! -e $EP_RUN ]] ; then
 	fi
 
 	if [[ ! -e "${MINECRAFT_CONFIG}/permission.json" ]] ; then
-		if [[ -n ${MINECRAFT_MEMBERS} || -n ${MINECRAFT_OPERATORS} || -n ${MINECRAFT_VISITORS} ]] ; then
+		if [[ -n "${MINECRAFT_MEMBERS}" || -n "${MINECRAFT_OPERATORS}" || -n "${MINECRAFT_VISITORS}" ]] ; then
 			log "Generating: permissions.json"
 			log "	Members   : ${MINECRAFT_MEMBERS}"
 			log "	Operators : ${MINECRAFT_OPERATORS}"
 			log "	Visitors  : ${MINECRAFT_VISITORS}"
 			jq \
-				--arg members "$MINECRAFT_MEMBERS" \
-				--arg operators "$MINECRAFT_OPERATORS" \
-				--arg visitors "$MINECRAFT_VISITORS" \
+				--arg members "${MINECRAFT_MEMBERS}" \
+				--arg operators "${MINECRAFT_OPERATORS}" \
+				--arg visitors "${MINECRAFT_VISITORS}" \
 				--null-input \
 				'[[$members | split(",") | map({permission: "member", xuid:.})],
 				[$operators | split(",") | map({permission: "operator", xuid:.})],
@@ -62,13 +62,13 @@ if [[ ! -e $EP_RUN ]] ; then
 	fi
 
 	if [[ ! -e "${MINECRAFT_CONFIG}/server.properties" ]] ; then
-		if [[ -n ${MINECRAFT_SERVER_NAME} ]] ; then
+		if [[ -n "${MINECRAFT_SERVER_NAME}" ]] ; then
 			log "Generating: server.properties"
 			cp --no-clobber "${MINECRAFT_HOME}/server.properties.dist" "${MINECRAFT_CONFIG}/server.properties"
 			ignore=("allowlist" "config" "download-url" "home" "members" "no-update" "operator" "reboot-schedule" "share" "visitors")
 			ignore=" ${ignore[*]} "
-			SAVEIFS=$IFS
-			IFS=$(echo -en "\n\b")
+			SAVEIFS="${IFS}"
+			IFS="$(echo -en "\n\b")"
 			for line in $(env); do
 				[[ ! "${line}" =~ ^MINECRAFT_ ]] && continue
 				name=$(echo "${line}" | sed --regexp-extended --expression="s/MINECRAFT_(.*)=.*/\\1/g")
@@ -76,10 +76,10 @@ if [[ ! -e $EP_RUN ]] ; then
 				name=${name//_/-}
 				[[ "${ignore}" =~ " ${name} " ]] && continue
 				value=$(echo "${line}" | sed --regexp-extended --expression="s/MINECRAFT_.*=(.*)/\\1/g")
-				echo "	$name=$value"
+				echo "	${name}=${value}"
 				sed --expression="/^${name}/c${name}=${value}" --in-place "${MINECRAFT_CONFIG}/server.properties"
 			done
-			IFS=$SAVEIFS
+			IFS="${SAVEIFS}"
 		fi
 	fi
 

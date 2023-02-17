@@ -2,7 +2,7 @@
 
 source /usr/local/lib/entrypoint.sh
 
-set -e
+set -e -o pipefail
 
 log "Checking for upgrades ..."
 version_deployed=$(cat "${MINECRAFT_HOME}/version" 2>/dev/null || true)
