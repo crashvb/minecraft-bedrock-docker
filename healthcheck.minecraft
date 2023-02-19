@@ -3,5 +3,5 @@
 set -e -o pipefail
 
 log "Checking if $(basename "${0}") is healthy ..."
-[[ $(pgrep --count --full /usr/lib/minecraft/bedrock_server) -gt 0 ]]
+[[ $(pgrep --count --full /var/lib/minecraft/bedrock_server) -gt 0 ]]
 
