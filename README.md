@@ -30,20 +30,6 @@ The embedded entrypoint script is located at `/etc/entrypoint.d/minecraft` and p
 
 In addition to the environment variables listed above, all enviroment variables prefixed with `MINECRAFT_` are scanned and populated into `server.properties` (e.g. `MINECRAFT_SERVER_NAME` will be used to assign `server-name`).
 
-## Healthcheck Scripts
-
-### cron
-
-The embedded healthcheck script is located at `/etc/healthcheck.d/cron` and performs the following actions:
-
-1. Verifies that all cron services are operational.
-
-### minecraft
-
-The embedded healthcheck script is located at `/etc/healthcheck.d/minecraft` and performs the following actions:
-
-1. Verifies that all minecraft services are operational.
-
 ## Standard Configuration
 
 ### Container Layout
@@ -55,6 +41,7 @@ The embedded healthcheck script is located at `/etc/healthcheck.d/minecraft` and
 │  ├─ entrypoint.d/
 │  │  └─ minecraft
 │  └─ healthcheck.d/
+│     ├─ cron
 │     └─ minecraft
 ├─ usr/
 │  └─ local/
