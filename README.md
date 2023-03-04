@@ -40,9 +40,13 @@ In addition to the environment variables listed above, all enviroment variables 
 │  ├─ minecraft/
 │  ├─ entrypoint.d/
 │  │  └─ minecraft
-│  └─ healthcheck.d/
-│     ├─ cron
-│     └─ minecraft
+│  ├─ healthcheck.d/
+│  │  ├─ cron
+│  │  └─ minecraft
+│  └─ supervisor/
+│     └─ config.d/
+│        ├─ cron.conf
+│        └─ minecraft.conf
 ├─ usr/
 │  └─ local/
 │     └─ bin/
