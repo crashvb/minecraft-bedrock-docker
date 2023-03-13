@@ -13,7 +13,10 @@ log "Version Embedded : ${version_embedded}"
 
 if [[ "X${version_deployed}" != "X${version_embedded}" ]] ; then
 	log "Deploying server version ${version_embedded} ..."
+	# Try to update secondary files ...
 	cp --no-clobber --no-dereference --recursive "${MINECRAFT_SHARE}/embedded/"* "${MINECRAFT_HOME}/"
+	# Always update primary files ...
+	cp --force "${MINECRAFT_SHARE}/embedded/"{bedrock_server,release-notes.txt,version,*.dist} "${MINECRAFT_HOME}/"
 	log "Done."
 else
 	log "No upgrades available ..."
