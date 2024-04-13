@@ -1,2 +1,0 @@
-# m h dom mon dow user command
-${MINECRAFT_REBOOT_SCHEDULE} root exec /bin/bash -c "echo 'Rebooting server...'; /usr/bin/pkill --full --signal=QUIT /usr/bin/supervisord"

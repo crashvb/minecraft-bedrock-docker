@@ -1,10 +1,10 @@
-FROM crashvb/cron:202404131349@sha256:1da424df9ce52351cf5df7545197d6a6c46229426b7d4adf70ac318e464ac6dd
+FROM crashvb/cron:202404131826@sha256:663a13bc37ef2db8d336eabe3b88734d65ac3a5674c539eb116ec18ba4642cc6
 ARG org_opencontainers_image_created=undefined
 ARG org_opencontainers_image_revision=undefined
 LABEL \
 	org.opencontainers.image.authors="Richard Davis <crashvb@gmail.com>" \
-	org.opencontainers.image.base.digest="sha256:1da424df9ce52351cf5df7545197d6a6c46229426b7d4adf70ac318e464ac6dd" \
-	org.opencontainers.image.base.name="crashvb/supervisord:202404131349" \
+	org.opencontainers.image.base.digest="sha256:663a13bc37ef2db8d336eabe3b88734d65ac3a5674c539eb116ec18ba4642cc6" \
+	org.opencontainers.image.base.name="crashvb/supervisord:202404131826" \
 	org.opencontainers.image.created="${org_opencontainers_image_created}" \
 	org.opencontainers.image.description="Image containing minecraft bedrock." \
 	org.opencontainers.image.licenses="Apache-2.0" \
@@ -18,13 +18,14 @@ RUN docker-apt jq unzip
 
 # Configure: minecraft
 ENV \
+	CRONTAB_ENVSUBST_MINECRAFT="\${MINECRAFT_REBOOT_SCHEDULE} root exec /bin/bash -c \"echo 'Rebooting server...'; /usr/bin/pkill --full --signal=QUIT /usr/bin/supervisord\"" \
 	MINECRAFT_ALLOW_LIST=true \
 	MINECRAFT_CONFIG=/etc/minecraft \
 	MINECRAFT_DOWNLOAD_URL=https://www.minecraft.net/en-us/download/server/bedrock \
 	MINECRAFT_HOME=/var/lib/minecraft \
 	MINECRAFT_REBOOT_SCHEDULE="0 4 * * *" \
 	MINECRAFT_SHARE=/usr/local/share/minecraft
-COPY cron.* minecraft-update.configs ${MINECRAFT_SHARE}/
+COPY minecraft-update.configs ${MINECRAFT_SHARE}/
 COPY minecraft-update minecraft-upgrade /usr/local/bin/
 RUN groupadd minecraft && \
 	useradd --create-home --gid=minecraft --home-dir="${MINECRAFT_HOME}" --shell=/usr/sbin/nologin minecraft && \

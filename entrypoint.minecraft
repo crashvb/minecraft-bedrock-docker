@@ -22,13 +22,6 @@ if [[ ! -e "${EP_RUN}" ]] ; then
 
 	install --group=root --mode=0644 --owner=minecraft /dev/null /var/log/cron.log
 
-	# cron
-	if [[ ! -e /etc/cron.d/minecraft ]] ; then
-		render_template "${MINECRAFT_SHARE}/cron" /etc/cron.d/minecraft
-	else
-		log "Skipping: cron template ..."
-	fi
-
 	# Volume initialization
 	if [[ ! -e "${MINECRAFT_CONFIG}/allowlist.json" ]] ; then
 		if [[ -n "${MINECRAFT_ALLOWLIST}" ]] ; then
