@@ -6,14 +6,14 @@ set -e -o pipefail
 if [[ -z "${MINECRAFT_NO_UPDATE}" ]] ; then
 	minecraft-update
 else
-	log "Skipping minecraft update ..."
+	log "Skipping: minecraft update ..."
 fi
 
 # Update deployed version, if needed ...
 if [[ -z "${MINECRAFT_NO_UPGRADE}" ]] ; then
 	minecraft-upgrade
 else
-	log "Skipping minecraft upgrade ..."
+	log "Skipping: minecraft upgrade ..."
 fi
 
 # Configure: minecraft
@@ -26,7 +26,7 @@ if [[ ! -e "${EP_RUN}" ]] ; then
 	if [[ ! -e /etc/cron.d/minecraft ]] ; then
 		render_template "${MINECRAFT_SHARE}/cron" /etc/cron.d/minecraft
 	else
-		log "Skipping cron template ..."
+		log "Skipping: cron template ..."
 	fi
 
 	# Volume initialization
