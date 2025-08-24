@@ -9,11 +9,12 @@ download_url=$(
 	curl \
 		--header "Accept-Encoding: identity" \
 		--header "Accept-Language: en" \
+		--header "Referer: https://www.minecraft.net/" \
 		--location \
 		--silent \
 		--user-agent "crashvb/minecraft-bedrock" \
-		"${MINECRAFT_DOWNLOAD_URL:=https://www.minecraft.net/en-us/download/server/bedrock}" | \
-	grep --extended-regexp --only-matching 'https://[^"]*linux/bedrock-server-[0-9.]*.zip'
+		"${MINECRAFT_DOWNLOAD_URL:=https://net-secondary.web.minecraft-services.net/api/v1.0/download/links}" | \
+	jq --raw-output '.result.links[] | select(.downloadType=="serverBedrockLinux") | .downloadUrl'
 )
 version_deployed=$(cat "${MINECRAFT_HOME}/version" 2>/dev/null || true)
 version_embedded=$(cat "${MINECRAFT_SHARE}/embedded/version" 2>/dev/null || true)

@@ -21,7 +21,7 @@ ENV \
 	CRONTAB_ENVSUBST_MINECRAFT="\${MINECRAFT_REBOOT_SCHEDULE} root exec /bin/bash -c \"echo 'Rebooting server...'; /usr/bin/pkill --full --signal=QUIT /usr/bin/supervisord\"" \
 	MINECRAFT_ALLOW_LIST=true \
 	MINECRAFT_CONFIG=/etc/minecraft \
-	MINECRAFT_DOWNLOAD_URL=https://www.minecraft.net/en-us/download/server/bedrock \
+	MINECRAFT_DOWNLOAD_URL=https://net-secondary.web.minecraft-services.net/api/v1.0/download/links \
 	MINECRAFT_HOME=/var/lib/minecraft \
 	MINECRAFT_REBOOT_SCHEDULE="0 4 * * *" \
 	MINECRAFT_SHARE=/usr/local/share/minecraft
