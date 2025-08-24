@@ -1,10 +1,10 @@
-FROM crashvb/cron:202404131826@sha256:663a13bc37ef2db8d336eabe3b88734d65ac3a5674c539eb116ec18ba4642cc6
+FROM crashvb/cron:202508010209@sha256:f4694d450ffdd0bed1368933be20a5892021f4ac86848f5353665595fa4b93bb
 ARG org_opencontainers_image_created=undefined
 ARG org_opencontainers_image_revision=undefined
 LABEL \
 	org.opencontainers.image.authors="Richard Davis <crashvb@gmail.com>" \
-	org.opencontainers.image.base.digest="sha256:663a13bc37ef2db8d336eabe3b88734d65ac3a5674c539eb116ec18ba4642cc6" \
-	org.opencontainers.image.base.name="crashvb/supervisord:202404131826" \
+	org.opencontainers.image.base.digest="sha256:f4694d450ffdd0bed1368933be20a5892021f4ac86848f5353665595fa4b93bb" \
+	org.opencontainers.image.base.name="crashvb/supervisord:202508010209" \
 	org.opencontainers.image.created="${org_opencontainers_image_created}" \
 	org.opencontainers.image.description="Image containing minecraft bedrock." \
 	org.opencontainers.image.licenses="Apache-2.0" \
