@@ -14,7 +14,7 @@ LABEL \
 	org.opencontainers.image.url="https://github.com/crashvb/minecraft-bedrock-docker"
 
 # Install packages, download files ...
-RUN docker-apt jq unzip
+RUN docker-apt coturn jq unzip
 
 # Configure: minecraft
 ENV \
@@ -24,9 +24,12 @@ ENV \
 	MINECRAFT_DOWNLOAD_URL=https://net-secondary.web.minecraft-services.net/api/v1.0/download/links \
 	MINECRAFT_HOME=/var/lib/minecraft \
 	MINECRAFT_REBOOT_SCHEDULE="0 4 * * *" \
-	MINECRAFT_SHARE=/usr/local/share/minecraft
+	MINECRAFT_SHARE=/usr/local/share/minecraft \
+	MINECRAFT_STUN=stun.cloudflare.com:3478 \
+	MINECRAFT_UDP_MAP=19140-19159:19140-19159
 COPY minecraft-update.configs supervisord.conf.template ${MINECRAFT_SHARE}/
 COPY minecraft-allowlist minecraft-console minecraft-permissions minecraft-update minecraft-upgrade /usr/local/bin/
+COPY cron.stun /etc/cron.hourly/stun
 RUN groupadd minecraft && \
 	useradd --create-home --gid=minecraft --home-dir="${MINECRAFT_HOME}" --shell=/usr/sbin/nologin minecraft && \
 	install --directory --group=minecraft --owner=minecraft "${MINECRAFT_CONFIG}" "${MINECRAFT_SHARE}/embedded" && \

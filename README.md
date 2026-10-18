@@ -26,6 +26,8 @@ The embedded entrypoint script is located at `/etc/entrypoint.d/minecraft` and p
  | MINECRAFT\_REBOOT\_SCHEDULE | 0 4 &ast; &ast; &ast; | Schedule section of the minecraft crontab entry. |
  | MINECRAFT\_NO\_UPDATE | | If defined, no automatic updating of the embedded version will be performed. |
  | MINECRAFT\_NO\_UPGRADE | | If defined, no automatic upgrading of the deployed version will be performed. |
+ | MINECRAFT\_STUN | stun.cloudflare.com:3478 | STUN server used to determine the public IPv4 address. |
+ | MINECRAFT\_UDP\_MAP | 19140-19159:19140-19159 | Port mapping appended to the public IP in `server-udp-ports`. |
  | MINECRAFT\_VISITORS | | Operators to be added to `permissions.json`. |
 
 In addition to the environment variables listed above, all enviroment variables prefixed with `MINECRAFT_` are scanned and populated into `server.properties` (e.g. `MINECRAFT_SERVER_NAME` will be used to assign `server-name`).
@@ -59,8 +61,8 @@ In addition to the environment variables listed above, all enviroment variables 
 
 ### Exposed Ports
 
-* `19132/udp` - Bedrock IPv4 port.
-* `19133/udp` - Bedrock IPV6 port.
+* `19132/tcp` - Bedrock NetherNet signaling port.
+* `19140-19159/udp` - Bedrock NetherNet client transport ports.
 
 ### Volumes
 

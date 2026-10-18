@@ -23,6 +23,13 @@ fi
 if [[ ! -e "${EP_RUN}" ]] ; then
 	log "Configuring $(basename "${0}") for first run ..."
 
+	log "Propagating environment variables ..."
+	cat <<- EOF > /etc/profile.d/minecraft.sh
+		export MINECRAFT_CONFIG="${MINECRAFT_CONFIG}"
+		export MINECRAFT_STUN="${MINECRAFT_STUN}"
+		export MINECRAFT_UDP_MAP="${MINECRAFT_UDP_MAP}"
+	EOF
+
 	# Configure: supervisor
 	generate_password "supervisord"
 	export SUPERVISORD_PASSWORD_DIGEST
@@ -69,7 +76,7 @@ if [[ ! -e "${EP_RUN}" ]] ; then
 		if [[ -n "${MINECRAFT_SERVER_NAME}" ]] ; then
 			log "Generating: server.properties"
 			cp --no-clobber "${MINECRAFT_HOME}/server.properties.dist" "${MINECRAFT_CONFIG}/server.properties"
-			ignore=("allowlist" "config" "download-url" "home" "members" "no-update" "operator" "reboot-schedule" "share" "visitors")
+			ignore=("allowlist" "config" "download-url" "home" "members" "no-update" "operator" "reboot-schedule" "share" "stun" "udp-map" "visitors")
 			ignore=" ${ignore[*]} "
 			SAVEIFS="${IFS}"
 			IFS="$(echo -en "\n\b")"
@@ -102,4 +109,7 @@ if [[ ! -e "${EP_RUN}" ]] ; then
 	log "Applying ownership and permissions ..."
 	find "${MINECRAFT_CONFIG}" "${MINECRAFT_HOME}" \( \! -user minecraft -o \! -group minecraft \) -exec chown minecraft:minecraft {} \;
 fi
+
+log "Invoking: stun ..."
+/etc/cron.hourly/stun
 
