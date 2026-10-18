@@ -40,6 +40,7 @@ function cleanup() {
 # Default values
 action=""
 permission="member"
+permission_set=""
 xuid=""
 
 # Parse options
@@ -56,6 +57,7 @@ while [[ "${#}" -gt 0 ]] ; do
 		-p|--permission)
 			require_value "${1}" "${2:-}"
 			permission="${2}"
+			permission_set=true
 			shift 2
 			;;
 		-x|--xuid)
@@ -104,7 +106,7 @@ case "${action}" in
 			log "ERROR: Missing required option: xuid" >&2
 			usage
 		fi
-		if [[ -n "${permission}" ]] ; then
+		if [[ -n "${permission_set}" ]] ; then
 			log "ERROR: Option --permission is not valid for action: remove" >&2
 			usage
 		fi
@@ -114,7 +116,7 @@ case "${action}" in
 			log "ERROR: Option --xuid is not valid for action: list" >&2
 			usage
 		fi
-		if [[ -n "${permission}" ]] ; then
+		if [[ -n "${permission_set}" ]] ; then
 			log "ERROR: Option --permission is not valid for action: list" >&2
 			usage
 		fi
