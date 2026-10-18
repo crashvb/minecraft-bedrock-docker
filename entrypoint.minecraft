@@ -20,6 +20,11 @@ fi
 if [[ ! -e "${EP_RUN}" ]] ; then
 	log "Configuring $(basename "${0}") for first run ..."
 
+	# Configure: supervisor
+	generate_password "supervisord"
+	render_template "${MINECRAFT_SHARE}/supervisord.conf" "/etc/supervisor/conf.d/10supervisord.conf"
+	chmod 0600 "/etc/supervisor/conf.d/10supervisord.conf"
+
 	install --group=root --mode=0644 --owner=minecraft /dev/null /var/log/cron.log
 
 	# Volume initialization

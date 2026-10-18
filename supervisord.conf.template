@@ -1,0 +1,13 @@
+[supervisord]
+loglevel = warn
+nodaemon = true
+user = root
+
+[unix_http_server]
+username = admin
+password = ${SUPERVISORD_PASSWORD}
+
+[supervisorctl]
+serverurl = unix:///var/run/supervisor.sock
+username = admin
+password = ${SUPERVISORD_PASSWORD}
