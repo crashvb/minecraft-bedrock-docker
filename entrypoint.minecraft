@@ -2,6 +2,9 @@
 
 set -e -o pipefail
 
+# Bug Fix: Supervisor's logtail client wraps long Basic-auth credentials.
+export EP_PWGEN_LENGTH=51
+
 # Update embedded version, if needed ...
 if [[ -z "${MINECRAFT_NO_UPDATE}" ]] ; then
 	minecraft-update
@@ -22,6 +25,9 @@ if [[ ! -e "${EP_RUN}" ]] ; then
 
 	# Configure: supervisor
 	generate_password "supervisord"
+	export SUPERVISORD_PASSWORD_DIGEST
+	SUPERVISORD_PASSWORD_DIGEST="$(printf '%s' "${SUPERVISORD_PASSWORD}" | sha1sum)"
+	SUPERVISORD_PASSWORD_DIGEST="${SUPERVISORD_PASSWORD_DIGEST%% *}"
 	render_template "${MINECRAFT_SHARE}/supervisord.conf" "/etc/supervisor/conf.d/10supervisord.conf"
 	chmod 0600 "/etc/supervisor/conf.d/10supervisord.conf"
 

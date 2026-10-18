@@ -5,7 +5,7 @@ user = root
 
 [unix_http_server]
 username = admin
-password = ${SUPERVISORD_PASSWORD}
+password = {SHA}${SUPERVISORD_PASSWORD_DIGEST}
 
 [supervisorctl]
 serverurl = unix:///var/run/supervisor.sock
