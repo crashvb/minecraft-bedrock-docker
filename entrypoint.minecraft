@@ -35,7 +35,7 @@ if [[ ! -e "${EP_RUN}" ]] ; then
 		fi
 	fi
 
-	if [[ ! -e "${MINECRAFT_CONFIG}/permission.json" ]] ; then
+	if [[ ! -e "${MINECRAFT_CONFIG}/permissions.json" ]] ; then
 		if [[ -n "${MINECRAFT_MEMBERS}" || -n "${MINECRAFT_OPERATORS}" || -n "${MINECRAFT_VISITORS}" ]] ; then
 			log "Generating: permissions.json"
 			log "	Members   : ${MINECRAFT_MEMBERS}"

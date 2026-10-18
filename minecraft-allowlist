@@ -1,0 +1,180 @@
+#!/bin/bash
+
+set -e -o pipefail
+
+source /usr/local/lib/entrypoint.sh
+
+function usage() {
+	cat <<- EOF >&2
+		usage: $(basename -- "${0}") --action <add|list|remove> [options]
+		options:
+		  -a, --action <action>  Action to perform (required)
+		  -h, --help             Show this help
+		      --ignore-limit     Allow the added player to bypass the player limit
+		  -n, --name <name>      Player name (required for add and remove)
+	EOF
+	exit 1
+}
+
+function require_value() {
+	if [[ -z "${2:-}" ]] ; then
+		log "ERROR: Missing value for option: ${1}" >&2
+		usage
+	fi
+}
+
+function write_allowlist() {
+	chmod --reference="${allowlist}" "${tmp}"
+	chown --reference="${allowlist}" "${tmp}"
+	mv --force -- "${tmp}" "${allowlist}"
+	tmp=""
+}
+
+# shellcheck disable=SC2317
+function cleanup() {
+	if [[ -n "${tmp}" && -e "${tmp}" ]] ; then
+		rm --force -- "${tmp}"
+	fi
+}
+
+# Default values
+action=""
+ignore_limit=""
+name=""
+
+# Parse options
+while [[ "${#}" -gt 0 ]] ; do
+	case "${1}" in
+		-a|--action)
+			require_value "${1}" "${2:-}"
+			action="${2}"
+			shift 2
+			;;
+		-h|--help)
+			usage
+			;;
+		--ignore-limit)
+			ignore_limit=true
+			shift
+			;;
+		-n|--name)
+			require_value "${1}" "${2:-}"
+			name="${2}"
+			shift 2
+			;;
+		-*)
+			log "ERROR: Unknown option: ${1}" >&2
+			usage
+			;;
+		*)
+			log "ERROR: Unexpected argument: ${1}" >&2
+			usage
+			;;
+	esac
+done
+
+# Required values
+if [[ -z "${action}" ]] ; then
+	log "ERROR: Missing required option: action" >&2
+	usage
+fi
+
+case "${action}" in
+	add|remove)
+		if [[ -z "${name}" || "${name}" =~ ^[[:space:]]*$ ]] ; then
+			log "ERROR: Missing required option: name" >&2
+			usage
+		fi
+		;;
+	list)
+		if [[ -n "${name}" ]] ; then
+			log "ERROR: Option --name is not valid for action: list" >&2
+			usage
+		fi
+		;;
+	*)
+		log "ERROR: Unknown action: ${action}" >&2
+		usage
+		;;
+esac
+
+if [[ -n "${ignore_limit}" && "${action}" != "add" ]] ; then
+	log "ERROR: Option --ignore-limit is only valid for action: add" >&2
+	usage
+fi
+
+MINECRAFT_CONFIG="${MINECRAFT_CONFIG:=/etc/minecraft}"
+allowlist="${MINECRAFT_CONFIG}/allowlist.json"
+tmp=""
+
+if [[ ! -f "${allowlist}" ]] ; then
+	log "ERROR: Allowlist does not exist: ${allowlist}" >&2
+	exit 1
+fi
+
+if ! jq --exit-status \
+	'type == "array" and all(.[]; type == "object" and (.name | type == "string"))' \
+	"${allowlist}" >/dev/null ; then
+	log "ERROR: Invalid allowlist: ${allowlist}" >&2
+	exit 1
+fi
+
+trap cleanup EXIT SIGINT SIGTERM
+
+case "${action}" in
+	add)
+		tmp="$(mktemp --tmpdir="${MINECRAFT_CONFIG}" .allowlist.json.XXXXXXXXXX)"
+		jq \
+			--arg name "${name}" \
+			--argjson ignore_limit "${ignore_limit:-false}" \
+			'
+				($name | ascii_downcase) as $target |
+				reduce .[] as $entry (
+					{entries: [], found: false};
+					if (($entry.name | ascii_downcase) == $target) then
+						if .found then
+							.
+						else
+							.entries += [$entry + {
+								name: $name,
+								ignoresPlayerLimit: $ignore_limit
+							}] |
+							.found = true
+						end
+					else
+						.entries += [$entry]
+					end
+				) |
+				if .found then
+					.entries
+				else
+					.entries + [{
+						name: $name,
+						ignoresPlayerLimit: $ignore_limit
+					}]
+				end
+			' \
+			"${allowlist}" > "${tmp}"
+		write_allowlist
+		log "Added to allowlist: ${name}"
+		;;
+	list)
+		jq . "${allowlist}"
+		;;
+	remove)
+		tmp="$(mktemp --tmpdir="${MINECRAFT_CONFIG}" .allowlist.json.XXXXXXXXXX)"
+		jq \
+			--arg name "${name}" \
+			'($name | ascii_downcase) as $target |
+			map(select((.name | ascii_downcase) != $target))' \
+			"${allowlist}" > "${tmp}"
+		write_allowlist
+		log "Removed from allowlist: ${name}"
+		;;
+	*)
+		exit 1
+		;;
+esac
+
+exit 0
+

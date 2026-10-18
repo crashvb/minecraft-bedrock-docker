@@ -1,0 +1,202 @@
+#!/bin/bash
+
+set -e -o pipefail
+
+source /usr/local/lib/entrypoint.sh
+
+function usage() {
+	cat <<- EOF >&2
+		usage: $(basename -- "${0}") --action <add|list|remove> [options]
+		options:
+		  -a, --action <action>          Action to perform (required)
+		  -h, --help                     Show this help
+		  -p, --permission <permission>  Permission for the player: member, operator, or visitor
+		  -x, --xuid <xuid>              Player XUID (required for add and remove)
+	EOF
+	exit 1
+}
+
+function require_value() {
+	if [[ -z "${2:-}" ]] ; then
+		log "ERROR: Missing value for option: ${1}" >&2
+		usage
+	fi
+}
+
+function write_permissions() {
+	chmod --reference="${permissions}" "${tmp}"
+	chown --reference="${permissions}" "${tmp}"
+	mv --force -- "${tmp}" "${permissions}"
+	tmp=""
+}
+
+# shellcheck disable=SC2317
+function cleanup() {
+	if [[ -n "${tmp}" && -e "${tmp}" ]] ; then
+		rm --force -- "${tmp}"
+	fi
+}
+
+# Default values
+action=""
+permission="member"
+xuid=""
+
+# Parse options
+while [[ "${#}" -gt 0 ]] ; do
+	case "${1}" in
+		-a|--action)
+			require_value "${1}" "${2:-}"
+			action="${2}"
+			shift 2
+			;;
+		-h|--help)
+			usage
+			;;
+		-p|--permission)
+			require_value "${1}" "${2:-}"
+			permission="${2}"
+			shift 2
+			;;
+		-x|--xuid)
+			require_value "${1}" "${2:-}"
+			xuid="${2}"
+			shift 2
+			;;
+		-*)
+			log "ERROR: Unknown option: ${1}" >&2
+			usage
+			;;
+		*)
+			log "ERROR: Unexpected argument: ${1}" >&2
+			usage
+			;;
+	esac
+done
+
+# Required values
+if [[ -z "${action}" ]] ; then
+	log "ERROR: Missing required option: action" >&2
+	usage
+fi
+
+case "${action}" in
+	add)
+		if [[ -z "${xuid}" || "${xuid}" =~ ^[[:space:]]*$ ]] ; then
+			log "ERROR: Missing required option: xuid" >&2
+			usage
+		fi
+		case "${permission}" in
+			member|operator|visitor)
+				;;
+			"")
+				log "ERROR: Missing required option: permission" >&2
+				usage
+				;;
+			*)
+				log "ERROR: Unknown permission: ${permission}" >&2
+				usage
+				;;
+		esac
+		;;
+	remove)
+		if [[ -z "${xuid}" || "${xuid}" =~ ^[[:space:]]*$ ]] ; then
+			log "ERROR: Missing required option: xuid" >&2
+			usage
+		fi
+		if [[ -n "${permission}" ]] ; then
+			log "ERROR: Option --permission is not valid for action: remove" >&2
+			usage
+		fi
+		;;
+	list)
+		if [[ -n "${xuid}" ]] ; then
+			log "ERROR: Option --xuid is not valid for action: list" >&2
+			usage
+		fi
+		if [[ -n "${permission}" ]] ; then
+			log "ERROR: Option --permission is not valid for action: list" >&2
+			usage
+		fi
+		;;
+	*)
+		log "ERROR: Unknown action: ${action}" >&2
+		usage
+		;;
+esac
+
+MINECRAFT_CONFIG="${MINECRAFT_CONFIG:=/etc/minecraft}"
+permissions="${MINECRAFT_CONFIG}/permissions.json"
+tmp=""
+
+if [[ ! -f "${permissions}" ]] ; then
+	log "ERROR: Permissions file does not exist: ${permissions}" >&2
+	exit 1
+fi
+
+if ! jq --exit-status \
+	'type == "array" and all(.[];
+		type == "object" and
+		(.xuid | type == "string") and
+		(.permission == "member" or .permission == "operator" or .permission == "visitor"))' \
+	"${permissions}" >/dev/null ; then
+	log "ERROR: Invalid permissions file: ${permissions}" >&2
+	exit 1
+fi
+
+trap cleanup EXIT SIGINT SIGTERM
+
+case "${action}" in
+	add)
+		tmp="$(mktemp --tmpdir="${MINECRAFT_CONFIG}" .permissions.json.XXXXXXXXXX)"
+		jq \
+			--arg permission "${permission}" \
+			--arg xuid "${xuid}" \
+			'
+				reduce .[] as $entry (
+					{entries: [], found: false};
+					if ($entry.xuid == $xuid) then
+						if .found then
+							.
+						else
+							.entries += [$entry + {
+								permission: $permission,
+								xuid: $xuid
+							}] |
+							.found = true
+						end
+					else
+						.entries += [$entry]
+					end
+				) |
+				if .found then
+					.entries
+				else
+					.entries + [{
+						permission: $permission,
+						xuid: $xuid
+					}]
+				end
+			' \
+			"${permissions}" > "${tmp}"
+		write_permissions
+		log "Added permission: ${xuid} (${permission})"
+		;;
+	list)
+		jq . "${permissions}"
+		;;
+	remove)
+		tmp="$(mktemp --tmpdir="${MINECRAFT_CONFIG}" .permissions.json.XXXXXXXXXX)"
+		jq \
+			--arg xuid "${xuid}" \
+			'map(select(.xuid != $xuid))' \
+			"${permissions}" > "${tmp}"
+		write_permissions
+		log "Removed permission: ${xuid}"
+		;;
+	*)
+		exit 1
+		;;
+esac
+
+exit 0

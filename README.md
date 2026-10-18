@@ -48,6 +48,8 @@ In addition to the environment variables listed above, all enviroment variables 
 ├─ usr/
 │  └─ local/
 │     └─ bin/
+│        ├─ minecraft-allowlist
+│        ├─ minecraft-permissions
 │        ├─ minecraft-update
 │        └─ minecraft-upgrade
 └─ var/

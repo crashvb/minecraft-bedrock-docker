@@ -26,7 +26,7 @@ ENV \
 	MINECRAFT_REBOOT_SCHEDULE="0 4 * * *" \
 	MINECRAFT_SHARE=/usr/local/share/minecraft
 COPY minecraft-update.configs ${MINECRAFT_SHARE}/
-COPY minecraft-update minecraft-upgrade /usr/local/bin/
+COPY minecraft-allowlist minecraft-permissions minecraft-update minecraft-upgrade /usr/local/bin/
 RUN groupadd minecraft && \
 	useradd --create-home --gid=minecraft --home-dir="${MINECRAFT_HOME}" --shell=/usr/sbin/nologin minecraft && \
 	install --directory --group=minecraft --owner=minecraft "${MINECRAFT_CONFIG}" "${MINECRAFT_SHARE}/embedded" && \
